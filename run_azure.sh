@@ -4,7 +4,7 @@ set -e
 # Default settings
 COUNT=100000
 EPOCHS=10
-BATCH=16
+BATCH=32
 MODEL="allegro/herbert-large-cased"
 OUTPUT_DIR="outputs/ner_large"
 
