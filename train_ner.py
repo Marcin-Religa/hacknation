@@ -97,12 +97,20 @@ def main():
     parser.add_argument("--batch", type=int, default=8)
     parser.add_argument("--lr", type=float, default=5e-5)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--no_mps", action="store_true", help="Disable MPS")
     args = parser.parse_args()
 
     data_files = {"train": args.train, "validation": args.val}
     raw = load_dataset("json", data_files=data_files)
 
-    label_list = collect_labels(raw["train"])  # assume val labels subset
+    # Collect labels from BOTH train and validation to ensure coverage of rare classes
+    label_list = collect_labels(raw["train"])
+    val_labels = collect_labels(raw["validation"])
+    for l in val_labels:
+        if l not in label_list:
+             label_list.append(l)
+    label_list.sort() # re-sort for consistency
+    
     label2id = {l: i for i, l in enumerate(label_list)}
     id2label = {i: l for l, i in label2id.items()}
 
@@ -147,6 +155,8 @@ def main():
         logging_steps=50,
         seed=args.seed,
         fp16=False,
+        use_mps_device=not args.no_mps,
+        use_cpu=args.no_mps,
     )
 
     trainer = Trainer(

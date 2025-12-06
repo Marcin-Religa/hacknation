@@ -266,7 +266,7 @@ def render_with_spans(template: str, values: Dict[str, str]) -> Tuple[str, List[
 
 # --- Templatey (placeholdery) ---
 RARE_DOMAIN = "rare"
-RARE_BOOST = 4  # how many extra draws for the rare-focused domain
+RARE_BOOST = 8  # how many extra draws for the rare-focused domain
 
 TEMPLATES = {
     "urzad": [
