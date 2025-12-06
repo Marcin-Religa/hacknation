@@ -265,6 +265,9 @@ def render_with_spans(template: str, values: Dict[str, str]) -> Tuple[str, List[
 
 
 # --- Templatey (placeholdery) ---
+RARE_DOMAIN = "rare"
+RARE_BOOST = 4  # how many extra draws for the rare-focused domain
+
 TEMPLATES = {
     "urzad": [
         "Nazywam się {name} {surname}, PESEL {pesel}, mieszkam pod adresem {address}, tel. {phone}, email {email}.",
@@ -397,6 +400,12 @@ TEMPLATES = {
             "Paragraf 5: dane {pesel}, {email} przechowywane zgodnie z regulaminem; właściciel {name} {surname}.",
         "Paragraf 6: dane {credit_card} oraz {document_number} zaszyfrowane; użytkownik {username}.",
     ],
+    RARE_DOMAIN: [
+        "Profil wrażliwy: {name} {surname}, data ur. {date_of_birth}, płeć {sex}, orientacja {sexual_orientation}, etniczność {ethnicity}, szkoła {school_name}, sekret {secret}.",
+        "Formularz badań: {name} {surname}, urodzony {date_of_birth}, data zdarzenia {date}, orientacja {sexual_orientation}, etniczność {ethnicity}, hasło {secret}, uczelnia {school_name}.",
+        "Raport wrażliwości: {name} {surname}, {sex}, {ethnicity}, orientacja {sexual_orientation}, data {date}, sekret {secret}, szkoła {school_name}, dokument {document_number}.",
+        "Rejestracja konferencji: {name} {surname}, płeć {sex}, data ur {date_of_birth}, data zgłoszenia {date}, login {username}, hasło {secret}, szkoła {school_name}.",
+    ],
 }
 
 
@@ -459,6 +468,8 @@ def main():
     args = parser.parse_args()
 
     domains = list(TEMPLATES.keys())
+    if RARE_DOMAIN in TEMPLATES:
+        domains = domains + [RARE_DOMAIN] * (RARE_BOOST - 1)
     records: List[str] = []
     if args.append and Path(args.output).exists():
         records = Path(args.output).read_text().splitlines()

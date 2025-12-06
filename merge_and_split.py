@@ -13,6 +13,24 @@ random.seed(42)
 SYN_PATH = Path("synthetic.jsonl")
 AUTO_PATH = Path("auto_labels.jsonl")  # adjust if your auto labels are under a different name
 
+# Canonicalize labels to contest spec, drop noisy ones
+ALIAS_MAP = {
+    "id-number": "document-number",
+    "id_number": "document-number",
+    "name-1": "name",
+    "surname-1": "surname",
+}
+
+DROP_LABELS = {
+    "model",
+    "time",
+    "subject",
+    "genre",
+    "programming-language",
+    "version",
+    "healthcare-professional",
+}
+
 
 def load_jsonl(path: Path):
     return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
@@ -20,6 +38,37 @@ def load_jsonl(path: Path):
 
 def save_jsonl(path: Path, data):
     path.write_text("\n".join(json.dumps(x, ensure_ascii=False) for x in data))
+
+
+def normalize_label(label: str):
+    if not label:
+        return None
+    norm = label.strip().lower().replace("_", "-")
+    norm = ALIAS_MAP.get(norm, norm)
+    if norm in DROP_LABELS:
+        return None
+    return norm
+
+
+def normalize_entities(example):
+    entities = example.get("entities", []) or []
+    cleaned = []
+    for ent in entities:
+        if isinstance(ent, dict):
+            start, end, label = ent.get("start"), ent.get("end"), ent.get("label")
+        else:
+            # assume tuple/list [start, end, label]
+            if len(ent) < 3:
+                continue
+            start, end, label = ent[0], ent[1], ent[2]
+        norm_label = normalize_label(label)
+        if norm_label is None:
+            continue
+        if start is None or end is None:
+            continue
+        cleaned.append({"start": start, "end": end, "label": norm_label})
+    example["entities"] = cleaned
+    return example
 
 
 def main():
@@ -36,6 +85,29 @@ def main():
         print("Brak auto_labels.jsonl - używam tylko synthetic.jsonl")
 
     all_data = [item for src in sources for item in src]
+
+    # Normalize labels, drop noisy ones, remove empty examples
+    total_before = 0
+    dropped_entities = 0
+    dropped_examples = 0
+    normalized = []
+    for item in all_data:
+        before = len(item.get("entities", []))
+        total_before += before
+        item = normalize_entities(item)
+        after = len(item.get("entities", []))
+        dropped_entities += before - after
+        if after == 0:
+            dropped_examples += 1
+            continue
+        normalized.append(item)
+
+    all_data = normalized
+    if dropped_entities or dropped_examples:
+        print(
+            f"Normalizacja etykiet: usunięto {dropped_entities} encji, odrzucono {dropped_examples} przykładów bez etykiet"
+        )
+
     random.shuffle(all_data)
 
     n = len(all_data)
