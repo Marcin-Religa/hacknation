@@ -57,7 +57,7 @@ Assuming checkpoint in outputs/herbert-ner-local/ and input file input.txt from 
 - Uses regex validators for PESEL/email/phone/IBAN/document, then contextual NER.
 
 ## Evaluation
-Micro F1 on test split (local model ~0.93 F1 when trained locally):
+Micro F1 on test split (local model ~0.99 F1 when trained locally):
 ```bash
 .venv/bin/python evaluate_hybrid.py \
   --model outputs/herbert-ner-local \
@@ -72,9 +72,8 @@ Micro F1 on test split (local model ~0.93 F1 when trained locally):
 - synthetic_generation_CZK_team.md (included; describes templates/rare boost/examples).
 - presentation_CZK_team.pdf (add manually, max 5 slides).
 
-## Hardware/perf guidance
-- Local run on GPU V100 16GB: batch 8–16 fits; ~3–4 epochs in ~1–2h.
-- CPU works but slow; reduce batch.
+## Hardware
+- Local run on Apple M1
 
 ## Notes
 - Labels normalized to contest spec (25 classes); aliases (id-number→document-number, name-1→name, surname-1→surname); dropped noisy labels (model/time/subject/genre/programming-language/version/healthcare-professional).
